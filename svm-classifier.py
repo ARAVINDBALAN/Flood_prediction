@@ -73,3 +73,9 @@ print(pred)
 #print(X_test
 from sklearn.metrics import accuracy_score
 print (accuracy_score(y_test, pred))
+
+
+from sklearn.externals import joblib
+
+joblib.dump(svc_model, 'svm.pkl') 
+
