@@ -23,6 +23,11 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
+from sklearn.externals import joblib
+import pathlib
+abspath = pathlib.Path('f.pkl').absolute()
+dt = joblib.load(abspath)
+
 #initalizing flask app
 app = Flask(__name__)
 app.secret_key = 'my secret and not your secret'
@@ -104,6 +109,7 @@ def jsonweather():
     totalprecipitation = totalprecipitation/4
     return redirect(url_for('interim', city=city, state=state, date=date, precipitation=round(totalprecipitation, 2), year=year))
 
+nowdata = []
 
 @app.route('/interim', methods=['GET', 'POST'])
 def interim():
@@ -135,7 +141,7 @@ def interim():
     elif(month == '10' or month == '11' or month == '12'):
         month = 'Oct-Dec'
         duration = 3
-    
+    nowdata.append(month)
     #for the state code
     if(state == 'WB'):
         state = 'GANGETIC WEST BENGAL'
@@ -209,7 +215,7 @@ def interim():
         state = 'WEST RAJASTHAN'
     elif(state == 'UP'):
         state = 'WEST UTTAR PRADESH' 
-      
+    nowdata.append(state)
     #for the terrain
     if(state == 'GANGETIC WEST BENGAL'):
         terrain = 'Coastal-plateau'
@@ -283,13 +289,13 @@ def interim():
         terrain = 'Desert'
     elif(state == 'WEST UTTAR PRADESH'):
         terrain = 'Hilly'
-        
     return redirect(url_for('predict', city=city, state=state, month=month, precipitation=precipitation, duration=duration, terrain=terrain, year=year, actualMonth=actualMonth , state_symbol=state_symbol), code=307)
 
 
 #global vars for easy reusability
 global model, graph
 model, graph = init()
+#
 
 
 #preprocessing globals
@@ -312,7 +318,7 @@ def predict():
     year = request.args.get('year')
     actualMonth = int(request.args.get('actualMonth'))
     state_symbol = request.args.get('state_symbol')
-    
+    nowdata.append(year)
     request.args.get('terrain')
     
     currentMonth = datetime.datetime.now().month
@@ -321,7 +327,7 @@ def predict():
     #optional parameters
     city = request.args.get('city')
     duration = float(request.args.get('duration'))
-    
+    nowdata.append(terrain)
     #normalization of precipitaion over the duration
     prec = prec * 30 * duration
     
@@ -359,16 +365,34 @@ def predict():
             return render_template('response5.html', city=city, state=state, month=month, duration=duration, precipitation=round(prec, 2), terrain=terrain, severity=response, year=year, level='5')
         
     x = np.array([state,prec]);
-    
-    #preprocessing x
+    nowdata.append(prec)
+        #preprocessing x
+    print(nowdata,"dasssssssssssssssssssssssssss")
+    nowdatanew = []
+    nowdatanew.append(nowdata[1])
+    nowdatanew.append(nowdata[2])
+    nowdatanew.append(nowdata[-1])
+    nowdatanew.append(nowdata[0])
+    nowdatanew.append(nowdata[-1])
+    nowdatanew.append(0)
+    nowdatanew.append(nowdata[-2])
+    nowdatanew.append('nan')
+    nowdatanew.append(0)
+   # datafortest = alter_database(nowdatanew)
+    #print(datafortest[4000:])
     x = np.reshape(x,(-1,2))
     x[:, 0] = labelencoder_X_1.transform(x[:, 0])
     x = onehotencoder.transform(x).toarray()
-    x = x[:,1:]
-    x = sc_X.transform(x)
     
+    x = x[:,1:]
+
+    x = sc_X.transform(x)
+
     with graph.as_default():
         out = model.predict(x)
+     #   resfromdt = dt.predict(datafortest)
+        
+        
         response = np.argmax(out,axis=1)[0]
         if(int(response) == 0 ):
             return render_template('response0.html', city=city, state=state, month=month, duration=duration, precipitation=round(prec, 2), terrain=terrain, severity=response, year=year, level='0')
@@ -382,6 +406,44 @@ def predict():
             return render_template('response4.html', city=city, state=state, month=month, duration=duration, precipitation=round(prec, 2), terrain=terrain, severity=response, year=year, level='4')
         else:
             return render_template('response5.html', city=city, state=state, month=month, duration=duration, precipitation=round(prec, 2), terrain=terrain, severity=response, year=year, level='5')
+
+
+
+
+import pandas as pd
+def alter_database(data):
+    print(data)
+    data_frame = pd.DataFrame([data],columns=["SUBDIVISION","YEAR","ANNUAL PRECIPITATION","QUARTER","PRECIPITATION","SEVERITY1","TERRAIN","CLIMATE","SEVERITY"])
+    data_frame.to_csv('dtsvmelm.csv',mode='a',header=False,index=False)
+
+    dataset = pd.read_csv("up.csv")
+    dataset = dataset.dropna()
+
+#print(df.head())
+    X = dataset.iloc[:,[0,3,4,6]].values
+    y = dataset.iloc[:,5].values
+#print(X[0])
+    dataset2 = dataset[dataset['SEVERITY']!=0]
+
+   
+
+# Encoding categorical data
+# Encoding the Independent Variable
+    from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+    labelencoder_X = LabelEncoder()
+    X[:, 0] = labelencoder_X.fit_transform(X[:, 0])
+    X[:, 1] = labelencoder_X.fit_transform(X[:, 1])
+    X[:, 3] = labelencoder_X.fit_transform(X[:, 3])
+    onehotencoder = OneHotEncoder(categorical_features = [0,1,3])
+    X = onehotencoder.fit_transform(X).toarray()
+    X = X[:,1:]
+    from sklearn.preprocessing import StandardScaler
+    sc_X = StandardScaler()
+    X_train = sc_X.fit_transform(X)
+    return X_train
+
+
+
 
 def createEncoderandScaler():
         

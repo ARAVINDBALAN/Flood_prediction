@@ -55,7 +55,6 @@ sc_X = StandardScaler()
 X_train = sc_X.fit_transform(X_train)
 X_test = sc_X.transform(X_test)
 
-
 dt = DecisionTreeClassifier()
 dt.fit(X_train, y_train)
 
@@ -69,6 +68,15 @@ export_graphviz(dt, out_file=dot_data, feature_names=li)
 (graph, ) = graph_from_dot_data(dot_data.getvalue())
 Image(graph.create_png())
 
+
+
 print(pred)
 from sklearn.metrics import accuracy_score
 print (accuracy_score(y_test, pred))
+
+
+
+from sklearn.externals import joblib
+
+joblib.dump(dt, 'filename.pkl') 
+

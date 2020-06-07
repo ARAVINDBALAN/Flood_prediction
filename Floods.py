@@ -131,25 +131,25 @@ cm = confusion_matrix(y_test, res)
 print(cm)
 
 
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 
-plt.plot(classifier.classifier['acc'])
-plt.plot(classifier.classifier['val_acc'])
-plt.title('Model accuracy')
-plt.ylabel('Accuracy')
-plt.xlabel('Epoch')
-plt.legend(['Train', 'Test'], loc='upper left')
-plt.show()
+# plt.plot(classifier.classifier['acc'])
+# plt.plot(classifier.classifier['val_acc'])
+# plt.title('Model accuracy')
+# plt.ylabel('Accuracy')
+# plt.xlabel('Epoch')
+# plt.legend(['Train', 'Test'], loc='upper left')
+# plt.show()
 
-# Plot training & validation loss values
-plt.plot(classifier.classifier['loss'])
-plt.plot(classifier.classifier['val_loss'])
-plt.title('Model loss')
-plt.ylabel('Loss')
-plt.xlabel('Epoch')
-plt.legend(['Train', 'Test'], loc='upper left')
-plt.show()
+# # Plot training & validation loss values
+# plt.plot(classifier.classifier['loss'])
+# plt.plot(classifier.classifier['val_loss'])
+# plt.title('Model loss')
+# plt.ylabel('Loss')
+# plt.xlabel('Epoch')
+# plt.legend(['Train', 'Test'], loc='upper left')
+# plt.show()
 
 #Saving the model
 # serialize model to JSON
